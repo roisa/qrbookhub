@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Crect x='18' y='18' width='22' height='22' fill='white'/%3E%3Crect x='60' y='18' width='22' height='22' fill='white'/%3E%3Crect x='18' y='60' width='22' height='22' fill='white'/%3E%3Crect x='50' y='50' width='10' height='10' fill='white'/%3E%3Crect x='70' y='62' width='12' height='8' fill='white'/%3E%3Crect x='60' y='74' width='8' height='8' fill='white'/%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="description" content="Generate QR codes for your books in bulk. Paste links, generate, download a ZIP — no signup, runs in your browser." />
+    <title>QRBookHub — QR codes for your books, in seconds</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('qrbookhub-theme');
+          if (t === 'dark' || t === 'light') {
+            document.documentElement.dataset.theme = t;
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/qrbookhub/assets/index-CvaLYTaa.js"></script>
+    <link rel="stylesheet" crossorigin href="/qrbookhub/assets/index-CEMtBoBZ.css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="site-header">
+        <a class="brand" href="#top" aria-label="QRBookHub home">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <span class="brand-name">QRBookHub</span>
+            <span class="brand-tagline">QR codes for your books</span>
+          </div>
+        </a>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <span class="hero-pill">Free · No signup · Works offline</span>
+          <h1 class="hero-title">QR codes for your whole book list, in seconds.</h1>
+          <p class="hero-sub">
+            Paste a list of links — like your Google Drive book files — and download a tidy
+            ZIP of QR codes ready to print, paste on shelves, or hand out at events.
+          </p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-num">1</div>
+              <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="3" width="13" height="18" rx="2"></rect>
+                  <path d="M8 8h6M8 12h6M8 16h4"></path>
+                </svg>
+              </div>
+              <h3 class="step-title">Paste your links</h3>
+              <p class="step-desc">One link per line. Names are optional.</p>
+            </li>
+            <li class="step-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </li>
+            <li class="step">
+              <div class="step-num">2</div>
+              <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                  <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                  <path d="M14 14h3v3M20 14v3M14 20h3M20 17v4"></path>
+                </svg>
+              </div>
+              <h3 class="step-title">Generate QR codes</h3>
+              <p class="step-desc">We turn each link into a scannable code.</p>
+            </li>
+            <li class="step-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </li>
+            <li class="step">
+              <div class="step-num">3</div>
+              <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <h3 class="step-title">Download ZIP</h3>
+              <p class="step-desc">One file with every QR code, ready to share.</p>
+            </li>
+          </ol>
+        </section>
+
+        <section class="card input-card">
+          <header class="card-header">
+            <div>
+              <h2 class="card-title">Your links</h2>
+              <p class="card-sub">
+                One link per line. Add an optional name with <code>Book name | https://link</code>.
+              </p>
+            </div>
+            <span id="link-count" class="link-count" data-state="empty">No links yet</span>
+          </header>
+
+          <div class="textarea-wrap">
+            <textarea
+              id="urls"
+              placeholder="Paste your links here, one per line.
+
+Examples:
+The Great Gatsby | https://drive.google.com/file/d/abc123/view
+1984, https://drive.google.com/file/d/def456/view
+https://example.com/book.pdf"
+              spellcheck="false"
+              autocomplete="off"
+              aria-label="Paste your links"
+            ></textarea>
+          </div>
+
+          <div class="input-actions">
+            <button id="import-btn" class="btn btn-ghost" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Import file</span>
+            </button>
+            <input id="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden />
+
+            <button id="try-sample" class="btn btn-ghost" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2l2.4 5 5.6.8-4 3.9.9 5.5L12 14.8 7.1 17.2l.9-5.5-4-3.9 5.6-.8z"></path>
+              </svg>
+              <span>Try sample links</span>
+            </button>
+
+            <button id="clear" class="btn btn-ghost btn-ghost-quiet" type="button">
+              Clear
+            </button>
+          </div>
+
+          <details class="advanced">
+            <summary>
+              <span class="advanced-title">Advanced options</span>
+              <span class="advanced-hint">Size, margin, error correction</span>
+              <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="advanced-grid">
+              <div class="control-group">
+                <label for="qr-size">QR size</label>
+                <select id="qr-size">
+                  <option value="200">200 px (small)</option>
+                  <option value="300" selected>300 px (recommended)</option>
+                  <option value="400">400 px (large)</option>
+                  <option value="600">600 px (print)</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="qr-margin">Margin</label>
+                <select id="qr-margin">
+                  <option value="0">None</option>
+                  <option value="5">Small (5)</option>
+                  <option value="10" selected>Default (10)</option>
+                  <option value="20">Generous (20)</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="qr-ecc">Error correction</label>
+                <select id="qr-ecc">
+                  <option value="L">Low — smallest</option>
+                  <option value="M" selected>Medium — recommended</option>
+                  <option value="Q">Quartile — sturdier</option>
+                  <option value="H">High — most resilient</option>
+                </select>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <div class="primary-action">
+          <button id="generate" class="btn btn-primary btn-xl" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+              <path d="M14 14h3v3M20 14v3M14 20h3M20 17v4"></path>
+            </svg>
+            <span>Generate QR codes</span>
+          </button>
+          <p class="primary-hint" id="primary-hint">Paste links above to get started.</p>
+        </div>
+
+        <section class="card results-card">
+          <header class="card-header">
+            <div>
+              <h2 class="card-title">Your QR codes</h2>
+              <p class="card-sub" id="results-sub">They'll appear here after you generate.</p>
+            </div>
+            <div class="results-meta">
+              <input
+                id="search"
+                class="search-input"
+                type="search"
+                placeholder="Search by name or URL…"
+                autocomplete="off"
+                hidden
+              />
+              <span id="results-count" class="results-count"></span>
+            </div>
+          </header>
+
+          <div id="progress" class="progress" hidden>
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            <div id="progress-text" class="progress-text"></div>
+          </div>
+
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+
+          <div id="success-banner" class="success-banner" hidden>
+            <div class="success-check" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="success-text">
+              <strong id="success-headline">All set!</strong>
+              <span id="success-sub">Your QR codes are ready below.</span>
+            </div>
+            <button id="download" class="btn btn-success btn-lg" type="button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download ZIP</span>
+            </button>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            <div class="empty-illustration" aria-hidden="true">
+              <div class="empty-qr">
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+              </div>
+              <div class="empty-sparkle empty-sparkle-1">+</div>
+              <div class="empty-sparkle empty-sparkle-2">+</div>
+            </div>
+            <h3 class="empty-title">No QR codes yet</h3>
+            <p class="empty-copy">
+              Paste your links above and click <strong>Generate QR codes</strong>.
+              You can also drag a CSV or TXT file anywhere on this page.
+            </p>
+          </div>
+
+          <div id="grid" class="grid" aria-live="polite"></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>
+          <span class="footer-brand">QRBookHub</span>
+          <span class="footer-dot">·</span>
+          Open source
+          <span class="footer-dot">·</span>
+          Runs entirely in your browser — your links never leave your device.
+        </p>
+        <p class="footer-credit">
+          Powered by
+          <a href="https://ibracreative.com" target="_blank" rel="noopener noreferrer">IbraCreative.com</a>
+        </p>
+      </footer>
+    </div>
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="drop-overlay" class="drop-overlay" hidden>
+      <div class="drop-overlay-inner">
+        <div class="drop-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <p class="drop-title">Drop your file to import</p>
+        <p class="drop-sub">CSV, TSV, or TXT — we'll do the rest.</p>
+      </div>
+    </div>
+
+  </body>
+</html>
