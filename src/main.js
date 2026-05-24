@@ -3,7 +3,8 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { parseEntries, fileBaseFor } from './url-parser.js';
 import { csvToEntries, entriesToTextareaFormat } from './csv-parser.js';
-import { createQr, qrToBlob, nextFrame, idle } from './qr-generator.js';
+import { createQr, qrToBlob } from './qr-generator.js';
+import { runChunked, runChunkedAsync } from './scheduler.js';
 import { initThemeToggle } from './theme.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -34,6 +35,10 @@ const state = {
   items: [],
   busy: false,
   searchTerm: '',
+  observer: null,
+  controller: null,
+  renderOptions: null,
+  renderedCount: 0,
 };
 
 initThemeToggle(els.themeToggle);
@@ -43,7 +48,7 @@ function setStatus(msg, kind = '') {
   els.status.className = `status ${kind}`.trim();
 }
 
-function setProgress(done, total) {
+function setProgress(done, total, label) {
   if (total <= 0) {
     els.progress.hidden = true;
     return;
@@ -51,7 +56,7 @@ function setProgress(done, total) {
   els.progress.hidden = false;
   const pct = Math.round((done / total) * 100);
   els.progressFill.style.width = `${pct}%`;
-  els.progressText.textContent = `${done} / ${total} rendered`;
+  els.progressText.textContent = label || `${done} / ${total} rendered`;
 }
 
 function updateCount() {
@@ -68,7 +73,7 @@ function updateCount() {
   const suffix = state.searchTerm ? ` · ${visible} shown` : '';
   els.count.textContent = `${ok} ready${ok !== n ? ` · ${n - ok} failed` : ''}${suffix}`;
   els.empty.classList.add('hidden');
-  els.download.disabled = ok === 0;
+  els.download.disabled = ok === 0 || state.busy;
   els.search.hidden = false;
 }
 
@@ -80,16 +85,14 @@ function applyFilter() {
       item.url.toLowerCase().includes(term) ||
       (item.name || '').toLowerCase().includes(term);
     item.hidden = !matches;
-    if (item.cardEl) {
-      item.cardEl.classList.toggle('hidden', !matches);
-    }
+    if (item.cardEl) item.cardEl.classList.toggle('hidden', !matches);
   }
   updateCount();
 }
 
 function makeCard(item, index) {
   const card = document.createElement('div');
-  card.className = 'qr-card';
+  card.className = 'qr-card pending';
   card.dataset.index = String(index);
 
   const canvas = document.createElement('div');
@@ -142,20 +145,59 @@ function makeCard(item, index) {
   return { card, canvas };
 }
 
-async function downloadSingle(item, ext) {
-  if (item.error || !item.qr) return;
+function renderItem(item) {
+  if (item.rendered || item.error) return false;
   try {
-    const blob = await qrToBlob(item.qr, ext);
-    const name = `${fileBaseFor(item)}.${ext}`;
-    saveAs(blob, name);
+    const qr = createQr({ data: item.url, ...state.renderOptions });
+    qr.append(item.canvasEl);
+    item.qr = qr;
+    item.rendered = true;
+    item.cardEl.classList.remove('pending');
+    state.renderedCount++;
+    setProgress(state.renderedCount, state.items.length);
+    return true;
+  } catch (err) {
+    item.error = err.message || 'Render failed';
+    item.cardEl.classList.add('error');
+    item.cardEl.classList.remove('pending');
+    item.canvasEl.textContent = item.error;
+    state.renderedCount++;
+    setProgress(state.renderedCount, state.items.length);
+    return true;
+  }
+}
+
+async function ensureQrForBlob(item) {
+  if (item.qr) return item.qr;
+  return createQr({ data: item.url, ...state.renderOptions });
+}
+
+async function downloadSingle(item, ext) {
+  if (item.error) return;
+  try {
+    const qr = await ensureQrForBlob(item);
+    const blob = await qrToBlob(qr, ext);
+    saveAs(blob, `${fileBaseFor(item)}.${ext}`);
   } catch (err) {
     console.error(err);
     setStatus(`Failed to download: ${err.message}`, 'error');
   }
 }
 
+function abortCurrent() {
+  if (state.controller) {
+    state.controller.abort();
+    state.controller = null;
+  }
+  if (state.observer) {
+    state.observer.disconnect();
+    state.observer = null;
+  }
+}
+
 async function generate() {
   if (state.busy) return;
+  abortCurrent();
 
   const entries = parseEntries(els.textarea.value);
   if (entries.length === 0) {
@@ -163,58 +205,77 @@ async function generate() {
     return;
   }
 
+  const controller = new AbortController();
+  state.controller = controller;
   state.busy = true;
   els.generate.disabled = true;
   els.download.disabled = true;
-  setStatus(`Generating ${entries.length} QR code${entries.length === 1 ? '' : 's'}…`);
+  setStatus(`Preparing ${entries.length} QR code${entries.length === 1 ? '' : 's'}…`);
 
   els.grid.innerHTML = '';
   state.items = entries.map((e) => ({
     name: e.name,
     url: e.url,
     qr: null,
+    rendered: false,
     error: null,
     hidden: false,
     cardEl: null,
+    canvasEl: null,
   }));
-  updateCount();
+  state.renderOptions = {
+    size: Number(els.size.value),
+    margin: Number(els.margin.value),
+    ecc: els.ecc.value,
+  };
+  state.renderedCount = 0;
 
-  const size = Number(els.size.value);
-  const margin = Number(els.margin.value);
-  const ecc = els.ecc.value;
-
-  const cardEls = state.items.map((item, i) => {
-    const { card, canvas } = makeCard(item, i);
-    item.cardEl = card;
-    els.grid.appendChild(card);
-    return { card, canvas };
-  });
-
-  setProgress(0, state.items.length);
-  applyFilter();
-
+  const fragment = document.createDocumentFragment();
   for (let i = 0; i < state.items.length; i++) {
     const item = state.items[i];
-    const { card, canvas } = cardEls[i];
-    try {
-      const qr = createQr({ data: item.url, size, margin, ecc });
-      qr.append(canvas);
-      item.qr = qr;
-    } catch (err) {
-      item.error = err.message || 'Render failed';
-      card.classList.add('error');
-      canvas.textContent = item.error;
-    }
-    setProgress(i + 1, state.items.length);
-    if (i % 8 === 7) {
-      await nextFrame();
-      await idle();
-    }
+    const { card, canvas } = makeCard(item, i);
+    item.cardEl = card;
+    item.canvasEl = canvas;
+    fragment.appendChild(card);
   }
+  els.grid.appendChild(fragment);
+
+  updateCount();
+  applyFilter();
+  setProgress(0, state.items.length);
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const idx = Number(entry.target.dataset.index);
+        const item = state.items[idx];
+        if (item) renderItem(item);
+        observer.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '300px 0px', threshold: 0 }
+  );
+  for (const item of state.items) observer.observe(item.cardEl);
+  state.observer = observer;
+
+  setStatus(`Rendering ${state.items.length} QR code${state.items.length === 1 ? '' : 's'} in the background…`);
+
+  const result = await runChunked({
+    count: state.items.length,
+    work: (i) => renderItem(state.items[i]),
+    signal: controller.signal,
+  });
 
   state.busy = false;
   els.generate.disabled = false;
   updateCount();
+
+  if (result.aborted) {
+    setStatus('Cancelled.', 'error');
+    setTimeout(() => setProgress(0, 0), 600);
+    return;
+  }
 
   const failed = state.items.filter((i) => i.error).length;
   if (failed === 0) {
@@ -227,33 +288,51 @@ async function generate() {
 
 async function downloadZip() {
   if (state.busy) return;
-  const ready = state.items.filter((i) => !i.error && i.qr);
+  const ready = state.items.filter((i) => !i.error);
   if (ready.length === 0) return;
 
+  abortCurrent();
+  const controller = new AbortController();
+  state.controller = controller;
   state.busy = true;
   els.download.disabled = true;
   els.generate.disabled = true;
-  setStatus(`Packaging ${ready.length} QR code${ready.length === 1 ? '' : 's'} into ZIP…`);
-  setProgress(0, ready.length);
+  setStatus(`Packaging ${ready.length} QR code${ready.length === 1 ? '' : 's'}…`);
+  setProgress(0, ready.length, `0 / ${ready.length} packed`);
 
   const zip = new JSZip();
   const folder = zip.folder('qrcodes');
   const seenNames = new Map();
 
-  for (let i = 0; i < ready.length; i++) {
-    const item = ready[i];
-    try {
-      const blob = await qrToBlob(item.qr, 'png');
-      const base = fileBaseFor(item);
-      const count = (seenNames.get(base) || 0) + 1;
-      seenNames.set(base, count);
-      const name = count === 1 ? `${base}.png` : `${base}-${count}.png`;
-      folder.file(name, blob);
-    } catch (err) {
-      console.error('zip add failed', err);
-    }
-    setProgress(i + 1, ready.length);
-    if (i % 6 === 5) await idle();
+  await runChunkedAsync({
+    count: ready.length,
+    concurrency: 2,
+    yieldEvery: 4,
+    signal: controller.signal,
+    onProgress: (done, total) => setProgress(done, total, `${done} / ${total} packed`),
+    work: async (i) => {
+      const item = ready[i];
+      try {
+        const qr = await ensureQrForBlob(item);
+        const blob = await qrToBlob(qr, 'png');
+        const base = fileBaseFor(item);
+        const count = (seenNames.get(base) || 0) + 1;
+        seenNames.set(base, count);
+        const name = count === 1 ? `${base}.png` : `${base}-${count}.png`;
+        folder.file(name, blob);
+      } catch (err) {
+        console.error('zip add failed', err);
+      }
+    },
+  });
+
+  if (controller.signal.aborted) {
+    state.busy = false;
+    els.generate.disabled = false;
+    updateCount();
+    setStatus('Cancelled.', 'error');
+    setTimeout(() => setProgress(0, 0), 600);
+    return;
   }
 
   const manifestLines = state.items.map((it, i) => {
@@ -280,18 +359,21 @@ async function downloadZip() {
 
   state.busy = false;
   els.generate.disabled = false;
-  els.download.disabled = false;
+  updateCount();
   setStatus(`Downloaded ${ready.length} QR code${ready.length === 1 ? '' : 's'} as ZIP.`, 'success');
   setTimeout(() => setProgress(0, 0), 800);
 }
 
 function clearAll() {
-  if (state.busy) return;
+  abortCurrent();
+  state.busy = false;
   els.textarea.value = '';
   els.search.value = '';
   state.items = [];
   state.searchTerm = '';
+  state.renderedCount = 0;
   els.grid.innerHTML = '';
+  els.generate.disabled = false;
   setStatus('');
   setProgress(0, 0);
   updateCount();
@@ -304,28 +386,19 @@ async function handleFile(file) {
   const lowered = name.toLowerCase();
   const text = await file.text();
 
-  let loadedText;
-  let count;
+  let entries;
   if (lowered.endsWith('.csv') || lowered.endsWith('.tsv') || file.type === 'text/csv') {
-    const entries = csvToEntries(text);
-    if (entries.length === 0) {
-      setStatus(`No URLs found in ${name}.`, 'error');
-      return;
-    }
-    loadedText = entriesToTextareaFormat(entries);
-    count = entries.length;
+    entries = csvToEntries(text);
   } else {
-    const entries = parseEntries(text);
-    if (entries.length === 0) {
-      setStatus(`No URLs found in ${name}.`, 'error');
-      return;
-    }
-    loadedText = entriesToTextareaFormat(entries);
-    count = entries.length;
+    entries = parseEntries(text);
   }
 
-  els.textarea.value = loadedText;
-  setStatus(`Loaded ${count} entr${count === 1 ? 'y' : 'ies'} from ${name}.`, 'success');
+  if (entries.length === 0) {
+    setStatus(`No URLs found in ${name}.`, 'error');
+    return;
+  }
+  els.textarea.value = entriesToTextareaFormat(entries);
+  setStatus(`Loaded ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} from ${name}.`, 'success');
 }
 
 els.importBtn.addEventListener('click', () => els.fileInput.click());
@@ -347,19 +420,16 @@ window.addEventListener('dragenter', (e) => {
   dragDepth++;
   els.dropOverlay.hidden = false;
 });
-
 window.addEventListener('dragover', (e) => {
   if (!isFileDrag(e)) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'copy';
 });
-
 window.addEventListener('dragleave', (e) => {
   if (!isFileDrag(e)) return;
   dragDepth = Math.max(0, dragDepth - 1);
   if (dragDepth === 0) els.dropOverlay.hidden = true;
 });
-
 window.addEventListener('drop', async (e) => {
   if (!isFileDrag(e)) return;
   e.preventDefault();
@@ -369,9 +439,13 @@ window.addEventListener('drop', async (e) => {
   if (file) await handleFile(file);
 });
 
+let searchDebounce = null;
 els.search.addEventListener('input', () => {
-  state.searchTerm = els.search.value;
-  applyFilter();
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    state.searchTerm = els.search.value;
+    applyFilter();
+  }, 80);
 });
 
 els.generate.addEventListener('click', generate);

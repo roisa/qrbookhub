@@ -34,21 +34,3 @@ export async function qrToBlob(qr, ext = 'png') {
   if (blob instanceof Blob) return blob;
   return new Blob([blob], { type: ext === 'svg' ? 'image/svg+xml' : `image/${ext}` });
 }
-
-export function nextFrame() {
-  return new Promise((resolve) =>
-    typeof requestAnimationFrame === 'function'
-      ? requestAnimationFrame(() => resolve())
-      : setTimeout(resolve, 0)
-  );
-}
-
-export function idle(timeout = 50) {
-  return new Promise((resolve) => {
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(() => resolve(), { timeout });
-    } else {
-      setTimeout(resolve, 0);
-    }
-  });
-}

@@ -402,6 +402,24 @@ select:focus {
   flex-direction: column;
   gap: 10px;
   transition: transform 0.15s, border-color 0.15s, opacity 0.15s;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 280px;
+}
+
+.qr-card.pending .qr-canvas {
+  background: linear-gradient(
+    90deg,
+    var(--panel) 0%,
+    var(--bg-soft) 50%,
+    var(--panel) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .qr-card.hidden {
