@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%234f46e5'/%3E%3Crect x='18' y='18' width='22' height='22' fill='white'/%3E%3Crect x='60' y='18' width='22' height='22' fill='white'/%3E%3Crect x='18' y='60' width='22' height='22' fill='white'/%3E%3Crect x='50' y='50' width='10' height='10' fill='white'/%3E%3Crect x='70' y='62' width='12' height='8' fill='white'/%3E%3Crect x='60' y='74' width='8' height='8' fill='white'/%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Bulk QR code generator. Paste links, generate QR codes, download as ZIP." />
+    <title>QRBookHub — Bulk QR Generator</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="site-header">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div>
+            <h1>QRBookHub</h1>
+            <p class="tagline">Bulk QR codes from your links — fast.</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="panel input-panel">
+          <label for="urls" class="panel-title">Paste your links</label>
+          <p class="hint">One per line, or separated by commas. Google Drive links work great.</p>
+          <textarea
+            id="urls"
+            placeholder="https://drive.google.com/file/d/abc123/view&#10;https://drive.google.com/file/d/def456/view&#10;https://example.com/book.pdf"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+
+          <div class="controls">
+            <div class="control-group">
+              <label for="qr-size">Size</label>
+              <select id="qr-size">
+                <option value="200">200px</option>
+                <option value="300" selected>300px</option>
+                <option value="400">400px</option>
+                <option value="600">600px</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="qr-margin">Margin</label>
+              <select id="qr-margin">
+                <option value="0">0</option>
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="qr-ecc">Error correction</label>
+              <select id="qr-ecc">
+                <option value="L">L (low)</option>
+                <option value="M" selected>M (medium)</option>
+                <option value="Q">Q (quartile)</option>
+                <option value="H">H (high)</option>
+              </select>
+            </div>
+
+            <div class="control-group spacer"></div>
+
+            <button id="generate" class="btn btn-primary" type="button">
+              Generate QR codes
+            </button>
+            <button id="download" class="btn btn-secondary" type="button" disabled>
+              Download ZIP
+            </button>
+            <button id="clear" class="btn btn-ghost" type="button">
+              Clear
+            </button>
+          </div>
+
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div id="progress" class="progress" hidden>
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            <div id="progress-text" class="progress-text"></div>
+          </div>
+        </section>
+
+        <section class="panel results-panel">
+          <div class="results-header">
+            <h2 class="panel-title">Results</h2>
+            <span id="results-count" class="results-count"></span>
+          </div>
+          <div id="grid" class="grid" aria-live="polite"></div>
+          <div id="empty-state" class="empty-state">
+            <div class="empty-mark" aria-hidden="true"></div>
+            <p>Paste links above and click <strong>Generate QR codes</strong>.</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>QRBookHub · Open source · Runs entirely in your browser</p>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

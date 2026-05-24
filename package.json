@@ -1,0 +1,20 @@
+{
+  "name": "qrbookhub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Bulk QR code generator for Google Drive links and other URLs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "qr-code-styling": "^1.6.0-rc.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
