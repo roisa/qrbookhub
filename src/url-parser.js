@@ -1,29 +1,72 @@
 const URL_LIKE = /^(https?:\/\/|ftp:\/\/|www\.|mailto:|tel:)/i;
 
-export function parseUrls(input) {
-  if (!input || typeof input !== 'string') return [];
-
-  const parts = input
-    .split(/[\n,]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const seen = new Set();
-  const result = [];
-  for (const raw of parts) {
-    const cleaned = raw.replace(/^["'<]+|["'>]+$/g, '').trim();
-    if (!cleaned) continue;
-    if (seen.has(cleaned)) continue;
-    seen.add(cleaned);
-    result.push(cleaned);
-  }
-  return result;
-}
-
 export function looksLikeUrl(value) {
   if (!value) return false;
-  if (URL_LIKE.test(value)) return true;
-  return /\.[a-z]{2,}(\/|$)/i.test(value);
+  const v = String(value).trim();
+  if (!v) return false;
+  if (URL_LIKE.test(v)) return true;
+  return /^[^\s]+\.[a-z]{2,}(\/|$)/i.test(v);
+}
+
+export function parseEntries(input) {
+  if (!input || typeof input !== 'string') return [];
+  const seen = new Set();
+  const entries = [];
+
+  const add = (name, url) => {
+    const cleanedUrl = String(url || '')
+      .replace(/^["'<]+|["'>]+$/g, '')
+      .trim();
+    if (!cleanedUrl) return;
+    if (seen.has(cleanedUrl)) return;
+    seen.add(cleanedUrl);
+    entries.push({ name: String(name || '').trim(), url: cleanedUrl });
+  };
+
+  const lines = input.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    if (line.includes('\t')) {
+      const parts = line.split(/\t+/).map((s) => s.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        add(parts[0], parts[1]);
+        continue;
+      }
+    }
+
+    const pipeIdx = line.indexOf('|');
+    if (pipeIdx > -1) {
+      const left = line.slice(0, pipeIdx).trim();
+      const right = line.slice(pipeIdx + 1).trim();
+      if (left && right) {
+        add(left, right);
+        continue;
+      }
+    }
+
+    if (line.includes(',')) {
+      const commaParts = line.split(',').map((s) => s.trim()).filter(Boolean);
+      const allUrls = commaParts.length >= 2 && commaParts.every(looksLikeUrl);
+      if (allUrls) {
+        for (const u of commaParts) add('', u);
+        continue;
+      }
+      if (commaParts.length >= 2) {
+        const first = commaParts[0];
+        const rest = commaParts.slice(1).join(',').trim();
+        if (looksLikeUrl(rest) && !looksLikeUrl(first)) {
+          add(first, rest);
+          continue;
+        }
+      }
+    }
+
+    add('', line);
+  }
+
+  return entries;
 }
 
 const GDRIVE_FILE = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
@@ -41,4 +84,19 @@ export function describeUrl(url) {
   } catch {
     return url.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 60);
   }
+}
+
+export function sanitizeFilename(name) {
+  if (!name) return '';
+  return name
+    .replace(/[/\\?%*:|"<>\x00-\x1f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+}
+
+export function fileBaseFor(entry) {
+  const safe = sanitizeFilename(entry.name);
+  if (safe) return safe;
+  return describeUrl(entry.url);
 }

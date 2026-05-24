@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Bulk QR code generator. Paste links, generate QR codes, download as ZIP." />
     <title>QRBookHub — Bulk QR Generator</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('qrbookhub-theme');
+          if (t === 'dark' || t === 'light') {
+            document.documentElement.dataset.theme = t;
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="app">
@@ -17,15 +27,30 @@
             <p class="tagline">Bulk QR codes from your links — fast.</p>
           </div>
         </div>
+        <div class="header-actions">
+          <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme">
+            <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+            </svg>
+            <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </div>
       </header>
 
       <main>
         <section class="panel input-panel">
           <label for="urls" class="panel-title">Paste your links</label>
-          <p class="hint">One per line, or separated by commas. Google Drive links work great.</p>
+          <p class="hint">
+            One per line. Optionally add a custom name: <code>My Book | https://link</code>,
+            <code>My Book, https://link</code>, or tab-separated.
+            Or import a CSV / drag-and-drop a file below.
+          </p>
           <textarea
             id="urls"
-            placeholder="https://drive.google.com/file/d/abc123/view&#10;https://drive.google.com/file/d/def456/view&#10;https://example.com/book.pdf"
+            placeholder="The Great Gatsby | https://drive.google.com/file/d/abc123/view&#10;1984, https://drive.google.com/file/d/def456/view&#10;https://example.com/book.pdf"
             spellcheck="false"
             autocomplete="off"
           ></textarea>
@@ -63,6 +88,11 @@
 
             <div class="control-group spacer"></div>
 
+            <button id="import-btn" class="btn btn-secondary" type="button" title="Import .csv, .tsv, or .txt">
+              Import file
+            </button>
+            <input id="file-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden />
+
             <button id="generate" class="btn btn-primary" type="button">
               Generate QR codes
             </button>
@@ -84,12 +114,23 @@
         <section class="panel results-panel">
           <div class="results-header">
             <h2 class="panel-title">Results</h2>
-            <span id="results-count" class="results-count"></span>
+            <div class="results-meta">
+              <input
+                id="search"
+                class="search-input"
+                type="search"
+                placeholder="Search by name or URL…"
+                autocomplete="off"
+                hidden
+              />
+              <span id="results-count" class="results-count"></span>
+            </div>
           </div>
           <div id="grid" class="grid" aria-live="polite"></div>
           <div id="empty-state" class="empty-state">
             <div class="empty-mark" aria-hidden="true"></div>
             <p>Paste links above and click <strong>Generate QR codes</strong>.</p>
+            <p class="empty-sub">Tip: drag a .csv or .txt file anywhere on this page to import it.</p>
           </div>
         </section>
       </main>
@@ -97,6 +138,19 @@
       <footer class="site-footer">
         <p>QRBookHub · Open source · Runs entirely in your browser</p>
       </footer>
+    </div>
+
+    <div id="drop-overlay" class="drop-overlay" hidden>
+      <div class="drop-overlay-inner">
+        <div class="drop-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <p>Drop your <strong>.csv</strong>, <strong>.tsv</strong>, or <strong>.txt</strong> file</p>
+      </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
